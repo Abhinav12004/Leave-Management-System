@@ -1,0 +1,39 @@
+{
+  "name": "leave-management-system",
+  "version": "1.0.0",
+  "description": "Mini Leave Management System backend (Node.js/Express)",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "setup": "echo '✅ Setup complete! Run npm run dev to start development server'",
+    "setup:check": "echo '🔍 Checking environment setup...' && node -e \"console.log('Node.js:', process.version); console.log('npm:', process.env.npm_version || 'Unknown')\"",
+    "setup:env": "echo '📝 Please create .env file with SUPABASE_URL and SUPABASE_ANON_KEY'",
+    "build": "echo '✅ No build step required for this Node.js project'",
+    "serve": "npm start",
+    "clean": "echo '🧹 Cleaning node_modules...' && rm -rf node_modules package-lock.json && npm install",
+    "clean:win": "echo '🧹 Cleaning node_modules...' && rmdir /s /q node_modules && del package-lock.json && npm install",
+    "health": "curl -f http://localhost:3000/ping || echo '❌ Server not running'",
+    "open": "echo '🌐 Opening test page...' && start http://localhost:3000/test-page.html",
+    "open:api": "echo '📡 Opening API docs...' && start http://localhost:3000/employees",
+    "deps": "npm outdated",
+    "deps:update": "npm update",
+    "info": "echo '📋 Project: Leave Management System' && echo '🚀 Development: npm run dev' && echo '🧪 Testing: npm run test' && echo '🌐 Test Page: http://localhost:3000/test-page.html'"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.55.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "@jest/globals": "^29.7.0",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3"
+  }
+}
