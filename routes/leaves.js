@@ -1,6 +1,6 @@
-// Leave routes - endpoints for leave management
-import express from 'express';
-import leaveController from '../controllers/leaveController.js';
+// Leave routes - API endpoints for leave management
+const express = require('express');
+const leaveController = require('../controllers/leaveController.js');
 
 const router = express.Router();
 
@@ -26,4 +26,4 @@ router.delete('/:id', leaveController.cancelLeaveRequest);
 // Example: PATCH /api/leaves/1 with body: { "start_date": "2025-08-25", "end_date": "2025-08-27", "leave_type": "half_day_morning" }
 router.patch('/:id', leaveController.modifyLeaveRequest);
 
-export default router;
+module.exports = router;

@@ -1,81 +1,81 @@
-// Main entry point for the Leave Management System
-// Updated with better error handling and explicit localhost binding
-import express from 'express';
-import dotenv from 'dotenv';
-import cors from 'cors';
-import { createClient } from '@supabase/supabase-js';
+// Main server file for Leave Management System
+// Author: Abhinav - Assignment Project
+const express = require('express');
+const dotenv = require('dotenv');
+const cors = require('cors');
+const { createClient } = require('@supabase/supabase-js');
 
 // Load environment variables
 dotenv.config();
 
-// Add global error handlers to catch any unhandled issues
+// Error handlers (learned this from stackoverflow)
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit immediately in development
 });
 
 process.on('uncaughtException', (error) => {
-  console.error('❌ Uncaught Exception:', error);
-  process.exit(1);
+  console.error('Uncaught Exception:', error);
+  // Don't exit immediately in development
 });
 
-// Initialize Express first (before Supabase to avoid crashes)
+// Initialize Express app
 const app = express();
-const PORT = process.env.PORT || 3000; // Use port 3000 as default
+const PORT = process.env.PORT || 3000;
 
-// Initialize Supabase with error handling
+// Setup Supabase connection
 let supabase;
 try {
-  console.log('🔄 Connecting to Supabase...');
+  console.log('Connecting to Supabase database...');
   supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-  console.log('✅ Supabase client created successfully');
+  console.log('Database client initialized');
 } catch (error) {
-  console.error('❌ Failed to create Supabase client:', error.message);
-  console.log('⚠️  Server will start but database features may not work');
+  console.error('Failed to create Supabase client:', error.message);
+  console.log('Warning: Server will start but database features may not work properly');
 }
 
-// Middleware
-app.use(cors()); // Allow all origins for now (maybe lock down later)
-app.use(express.json()); // Parse JSON bodies
+// Middleware setup
+app.use(cors()); // Allow all origins for development
+app.use(express.json());
 
-// Middleware to attach Supabase client to requests
+// Add supabase to request object
 app.use((req, res, next) => {
   req.supabase = supabase;
   next();
 });
 
-// Import routes
-import employeeRoutes from './routes/employees.js';
-import leaveRoutes from './routes/leaves.js';
+// Import route files
+const employeeRoutes = require('./routes/employees.js');
+const leaveRoutes = require('./routes/leaves.js');
 
-console.log('📦 Loading employee routes...');
-console.log('📦 Loading leave routes...');
-console.log('✅ All routes loaded successfully');
+console.log('Loading employee routes...');
+console.log('Loading leave routes...');
+console.log('Routes loaded');
 
-// Serve static files from current directory
-console.log('📂 Setting up static file serving...');
+// Serve static files
+console.log('Setting up static file serving...');
 app.use(express.static('.'));
 
-// Serve static test page
+// Test page routes
 app.get('/test', (req, res) => {
   res.sendFile('test-page.html', { root: '.' });
 });
 
-// Also serve test page directly at /test-page.html
 app.get('/test-page.html', (req, res) => {
   res.sendFile('test-page.html', { root: '.' });
 });
 
-// Basic health check - let's make sure everything's working
+// Main API info endpoint
 app.get('/', (req, res) => {
   res.json({ 
-    message: "Leave Management API is running! 🚀",
+    message: "Leave Management API is running",
     status: "healthy",
     timestamp: new Date().toISOString(),
     available_endpoints: [
       'GET /employees - List all employees',
       'POST /employees - Create new employee', 
       'GET /employees/:id - Get employee by ID',
-      'GET /employees/:id/leave-balance - Get employee leave balance summary',
+      'GET /employees/:id/leave-balance - Get employee leave balance',
       'POST /api/leaves/apply - Apply for leave',
       'GET /api/leaves/employee/:employee_id - Get employee leave requests',
       'GET /api/leaves/pending - Get all pending leave requests',
@@ -89,12 +89,12 @@ app.get('/', (req, res) => {
   });
 });
 
-// Simple ping endpoint
+// Health check endpoint
 app.get('/ping', (req, res) => {
-  res.json({ message: "pong! (yep, server is alive)" });
+  res.json({ message: "pong - server is alive" });
 });
 
-// API Routes
+// Setup API routes
 app.use('/employees', employeeRoutes);
 app.use('/api/leaves', leaveRoutes);
 
@@ -125,7 +125,7 @@ app.get('/ping-db', async (req, res) => {
     }
     
     res.json({
-      message: "Database is connected and ready! 🎉",
+      message: "Database connection successful",
       status: "connected",
       timestamp: new Date().toISOString()
     });
@@ -139,20 +139,37 @@ app.get('/ping-db', async (req, res) => {
   }
 });
 
-// Catch-all for unknown routes (just in case)
+// Catch all unknown routes
 app.use((req, res) => {
-  res.status(404).json({ error: "Oops, nothing here! Check the endpoint." });
+  res.status(404).json({ error: "Endpoint not found" });
 });
 
 // Start server
-app.listen(PORT, '127.0.0.1', () => {
-  console.log(`🚀 Server is up and running on http://localhost:${PORT}`);
-  console.log(`💡 Pro tip: Visit /ping-db to test your database connection!`);
-  console.log(`📅 Started at: ${new Date().toISOString()}`);
-  console.log(`🔍 Server process ID: ${process.pid}`);
+const server = app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`📋 API Health: http://localhost:${PORT}/ping`);
+  console.log(`🌐 Test Page: http://localhost:${PORT}/test-page.html`);
+  console.log(`🗄️ Database Test: http://localhost:${PORT}/ping-db`);
+  console.log(`⏰ Started at: ${new Date().toISOString()}`);
+  console.log(`🔧 Process ID: ${process.pid}`);
 }).on('error', (err) => {
   console.error('❌ Server failed to start:', err.message);
   if (err.code === 'EADDRINUSE') {
-    console.log(`⚠️  Port ${PORT} is already in use. Try a different port.`);
+    console.log(`Port ${PORT} is already in use. Try a different port.`);
   }
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  server.close(() => {
+    console.log('Process terminated');
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('\nSIGINT received, shutting down gracefully');
+  server.close(() => {
+    console.log('Process terminated');
+  });
 });

@@ -81,4 +81,4 @@ const employeeModel = {
   }
 };
 
-export default employeeModel;
+module.exports = employeeModel;

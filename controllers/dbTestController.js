@@ -1,21 +1,22 @@
-// DB test controller - just to make sure everything's working
+
 const pool = require('../config/db');
 
 // Simple DB ping to check if connection is alive
 const pingDatabase = async (req, res) => {
   try {
-    // Let's ask the database what time it thinks it is
+    // Check if the pool is initialized
     const result = await pool.query('SELECT NOW() as current_time, version() as db_version');
     
     if (result.rows.length > 0) {
       res.json({
-        message: "Database is alive and kicking! 🎉",
+        message: "Database is alive and kicking",
         timestamp: result.rows[0].current_time,
         version: result.rows[0].db_version,
         status: "connected"
       });
     } else {
-      // This should never happen but... 
+     
+
       res.status(500).json({ error: "Got empty response from DB (weird!)" });
     }
   } catch (error) {
@@ -42,7 +43,7 @@ const checkTables = async (req, res) => {
     
     if (tables.length === 2) {
       res.json({
-        message: "All tables found! Ready to rock 🚀",
+        message: "All tables found! Database is ready",
         tables: tables
       });
     } else {

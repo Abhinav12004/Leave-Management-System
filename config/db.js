@@ -15,7 +15,7 @@ pool.query('SELECT NOW()', (err, res) => {
   if (err) {
     console.error('Oops! Database connection failed:', err.message);
   } else {
-    console.log('✅ DB connected! Current time is:', res.rows[0].now);
+    console.log('DB connected! Current time is:', res.rows[0].now);
   }
 });
 

@@ -5,8 +5,6 @@
  * mocks, and configurations needed across test suites.
  */
 
-import { jest } from '@jest/globals';
-
 // Global test timeout
 jest.setTimeout(30000);
 
@@ -107,4 +105,4 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
-export default {};
+module.exports = {};

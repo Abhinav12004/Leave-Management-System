@@ -1,7 +1,7 @@
-// Leave controller - business logic for leave management
-import employeeModel from '../models/employeeModel.js';
-import leaveModel from '../models/leaveModel.js';
-import dateUtils from '../utils/dateUtils.js';
+// Leave controller - handles leave related operations
+const employeeModel = require('../models/employeeModel.js');
+const leaveModel = require('../models/leaveModel.js');
+const dateUtils = require('../utils/dateUtils.js');
 
 const leaveController = {
   // Apply for leave - main endpoint with all business validations
@@ -40,7 +40,7 @@ const leaveController = {
         });
       }
 
-      console.log(`📝 Processing leave application for employee ${employee_id} from ${start_date} to ${end_date}`);
+      console.log(`Processing leave application for employee ${employee_id} from ${start_date} to ${end_date}`);
 
       // Step 2: Verify employee exists and get their info
       const employeeResult = await employeeModel.getById(req.supabase, employee_id);
@@ -52,11 +52,11 @@ const leaveController = {
       }
 
       const employee = employeeResult.data;
-      console.log(`✅ Employee found: ${employee.name} (${employee.email})`);
+      console.log(`Employee found: ${employee.name} (${employee.email})`);
 
       // Step 3: Calculate requested days (business days only)
       const requestedDays = dateUtils.calculateBusinessDays(start_date, end_date);
-      console.log(`📊 Requested days: ${requestedDays} business days`);
+      console.log(`Requested days: ${requestedDays} business days`);
 
       // Step 3b: Get current leave balance
       const balanceResult = await employeeModel.getLeaveBalance(req.supabase, employee_id);
@@ -68,7 +68,7 @@ const leaveController = {
       }
 
       const currentBalance = balanceResult.data.remaining_leave;
-      console.log(`💰 Current leave balance: ${currentBalance} days`);
+      console.log(`Current leave balance: ${currentBalance} days`);
 
       // Step 3c: Check if requested days exceed available balance
       if (requestedDays > currentBalance) {
@@ -124,11 +124,11 @@ const leaveController = {
         });
       }
 
-      console.log(`🎉 Leave request created successfully with ID: ${result.data.id}`);
+      console.log(`Leave request created successfully with ID: ${result.data.id}`);
 
       // Return success response
       res.status(201).json({
-        message: "Leave request submitted successfully! 🎉",
+        message: "Leave request submitted successfully",
         leave_request: {
           id: result.data.id,
           employee_name: employee.name,
@@ -163,7 +163,7 @@ const leaveController = {
         });
       }
 
-      console.log(`📋 Fetching leave requests for employee ${employee_id}`);
+      console.log(`Fetching leave requests for employee ${employee_id}`);
 
       // First, verify employee exists
       const employeeResult = await employeeModel.getById(req.supabase, employee_id);
@@ -185,10 +185,10 @@ const leaveController = {
         });
       }
 
-      console.log(`✅ Found ${result.data.length} leave requests for ${employee.name}`);
+      console.log(`Found ${result.data.length} leave requests for ${employee.name}`);
 
       res.json({
-        message: "Leave requests retrieved successfully! 📋",
+        message: "Leave requests retrieved successfully",
         employee_name: employee.name,
         employee_email: employee.email,
         total_requests: result.data.length,
@@ -218,7 +218,7 @@ const leaveController = {
   // Get all pending leave requests (for managers to approve)
   async getPendingLeaveRequests(req, res) {
     try {
-      console.log('📋 Fetching all pending leave requests...');
+      console.log('Fetching all pending leave requests...');
 
       const result = await leaveModel.getPendingLeaveRequests(req.supabase);
       if (!result.success) {
@@ -228,10 +228,10 @@ const leaveController = {
         });
       }
 
-      console.log(`✅ Found ${result.data.length} pending leave requests`);
+      console.log(`Found ${result.data.length} pending leave requests`);
 
       res.json({
-        message: "Pending leave requests retrieved successfully! 📋",
+        message: "Pending leave requests retrieved successfully",
         total_pending: result.data.length,
         pending_requests: result.data.map(leave => ({
           id: leave.id,
@@ -275,7 +275,7 @@ const leaveController = {
         });
       }
 
-      console.log(`📝 Processing ${status} for leave request ${id} by manager ${approved_by}`);
+      console.log(`Processing ${status} for leave request ${id} by manager ${approved_by}`);
 
       // Step 1: Get the leave request details
       const leaveResult = await leaveModel.getById(req.supabase, id);
@@ -316,7 +316,7 @@ const leaveController = {
         });
       }
 
-      console.log(`✅ Leave request ${id} ${status} successfully by ${approver.name}`);
+      console.log(`Leave request ${id} ${status} successfully by ${approver.name}`);
 
       // Step 4: Get employee info for response
       const employeeResult = await employeeModel.getById(req.supabase, leave.employee_id);
@@ -332,7 +332,7 @@ const leaveController = {
       }
 
       res.json({
-        message: `Leave request ${status} successfully! ${status === 'approved' ? '✅' : '❌'}`,
+        message: `Leave request ${status} successfully`,
         updated_leave: {
           id: leave.id,
           employee_name: employee.name,
@@ -412,7 +412,7 @@ const leaveController = {
         });
       }
 
-      console.log(`✅ Leave request ${id} cancelled successfully`);
+      console.log(`Leave request ${id} cancelled successfully`);
 
       // Step 5: Get employee info for response
       const employeeResult = await employeeModel.getById(req.supabase, leave.employee_id);
@@ -607,7 +607,7 @@ const leaveController = {
         });
       }
 
-      console.log(`✅ Leave request ${id} modified successfully`);
+      console.log(`Leave request ${id} modified successfully`);
 
       // Step 9: Get employee info for response
       const employeeResult = await employeeModel.getById(req.supabase, currentLeave.employee_id);
@@ -661,4 +661,4 @@ const leaveController = {
   }
 };
 
-export default leaveController;
+module.exports = leaveController;

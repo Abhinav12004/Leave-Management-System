@@ -87,10 +87,16 @@ jspm_packages/
 ehthumbs.db
 Thumbs.db
 
-# Test files (optional - remove if you want to include tests)
-# tests/
-# *.test.js
+Test files (optional - remove if you want to include tests)
+ tests/
+ *.test.js
 
 # Temporary files
 temp/
 tmp/
+# Documentation cleanup patterns
+INTERVIEW_PREP.md
+DEPLOYMENT_*.md
+FINAL_*.md
+PRODUCTION_*.md
+SYSTEM_*.md

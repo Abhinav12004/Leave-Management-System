@@ -1,0 +1,731 @@
+openapi: 3.0.3
+info:
+  title: Leave Management System API
+  description: |
+    A comprehensive leave management system backend built with Node.js, Express.js, and Supabase.
+    This API provides endpoints for managing employee leave requests, approvals, and balance tracking.
+    
+    ## Features
+    - Employee management with leave balance tracking
+    - Leave application with comprehensive validation
+    - Manager approval workflow with business rules
+    - Real-time leave balance calculations
+    - Audit trail and reporting capabilities
+    
+    ## Authentication
+    This API uses Supabase authentication. Include your authentication token in the Authorization header.
+    
+    ## Rate Limiting
+    API requests are limited to 100 requests per minute per IP address.
+    
+    ## Error Handling
+    All errors follow RFC 7807 problem details format with appropriate HTTP status codes.
+  version: 1.0.0
+  contact:
+    name: Leave Management System Support
+    email: support@company.com
+    url: https://github.com/Abhinav12004/Leave-Management-System
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: https://company.com/terms
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://staging-api.company.com
+    description: Staging server
+  - url: https://api.company.com
+    description: Production server
+
+paths:
+  /ping:
+    get:
+      summary: Health check endpoint
+      description: Simple health check to verify server is running
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "pong - server is alive"
+
+  /ping-db:
+    get:
+      summary: Database connectivity check
+      description: Test database connectivity and return connection status
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Database connection successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "connected"
+                  message:
+                    type: string
+                    example: "Database connection successful"
+                  timestamp:
+                    type: string
+                    format: date-time
+                  server_time:
+                    type: string
+                    format: date-time
+        '503':
+          description: Database connection failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /employees:
+    get:
+      summary: Get all employees
+      description: Retrieve a list of all employees with their basic information
+      tags:
+        - Employees
+      responses:
+        '200':
+          description: Employees retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Employees retrieved successfully"
+                  employees:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Employee'
+                  count:
+                    type: integer
+                    example: 5
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    post:
+      summary: Create a new employee
+      description: Create a new employee with the provided information
+      tags:
+        - Employees
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEmployeeRequest'
+      responses:
+        '201':
+          description: Employee created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Employee created successfully"
+                  employee:
+                    $ref: '#/components/schemas/Employee'
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /employees/{id}:
+    get:
+      summary: Get employee by ID
+      description: Retrieve detailed information about a specific employee
+      tags:
+        - Employees
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Employee ID
+      responses:
+        '200':
+          description: Employee found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Employee found"
+                  employee:
+                    $ref: '#/components/schemas/Employee'
+        '400':
+          description: Invalid employee ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Employee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /employees/{id}/leave-balance:
+    get:
+      summary: Get employee leave balance
+      description: Retrieve detailed leave balance information for an employee
+      tags:
+        - Employees
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Employee ID
+      responses:
+        '200':
+          description: Leave balance calculated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Leave balance calculated successfully"
+                  employee:
+                    $ref: '#/components/schemas/EmployeeWithBalance'
+                  breakdown:
+                    $ref: '#/components/schemas/LeaveBalanceBreakdown'
+        '400':
+          description: Invalid employee ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Employee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/leaves/apply:
+    post:
+      summary: Apply for leave
+      description: Submit a new leave request with comprehensive validation
+      tags:
+        - Leave Requests
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveApplicationRequest'
+      responses:
+        '201':
+          description: Leave request submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Leave request submitted successfully"
+                  leave_request:
+                    $ref: '#/components/schemas/LeaveRequest'
+                  next_steps:
+                    type: string
+                    example: "Your request is pending approval. You'll be notified once a manager reviews it."
+        '400':
+          description: Invalid leave request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: Employee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflicting leave request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictError'
+
+  /api/leaves/employee/{employee_id}:
+    get:
+      summary: Get employee leave requests
+      description: Retrieve all leave requests for a specific employee
+      tags:
+        - Leave Requests
+      parameters:
+        - name: employee_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Employee ID
+      responses:
+        '200':
+          description: Leave requests retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Leave requests retrieved successfully"
+                  employee_name:
+                    type: string
+                  employee_email:
+                    type: string
+                  total_requests:
+                    type: integer
+                  leave_requests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeaveRequest'
+
+  /api/leaves/pending:
+    get:
+      summary: Get pending leave requests
+      description: Retrieve all pending leave requests for manager approval
+      tags:
+        - Leave Requests
+      responses:
+        '200':
+          description: Pending leave requests retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Pending leave requests retrieved successfully"
+                  total_pending:
+                    type: integer
+                  pending_requests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PendingLeaveRequest'
+
+  /api/leaves/{id}/approve:
+    put:
+      summary: Approve or reject leave request
+      description: Process a leave request by approving or rejecting it
+      tags:
+        - Leave Approval
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Leave request ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveApprovalRequest'
+      responses:
+        '200':
+          description: Leave request processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Leave request approved successfully"
+                  updated_leave:
+                    $ref: '#/components/schemas/ProcessedLeaveRequest'
+                  approval_summary:
+                    $ref: '#/components/schemas/ApprovalSummary'
+                  employee_balance_update:
+                    $ref: '#/components/schemas/BalanceUpdate'
+                  next_steps:
+                    type: string
+        '400':
+          description: Invalid approval request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Leave request or approver not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Employee:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "john.doe@company.com"
+        department:
+          type: string
+          example: "Engineering"
+        joining_date:
+          type: string
+          format: date
+          example: "2024-01-15"
+        leave_balance:
+          type: integer
+          example: 20
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateEmployeeRequest:
+      type: object
+      required:
+        - name
+        - email
+        - department
+        - joining_date
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: "John Doe"
+          description: Employee full name
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          example: "john.doe@company.com"
+          description: Unique email address
+        department:
+          type: string
+          enum: [Engineering, Human Resources, Finance, Marketing, Sales, Operations, Legal, Management, IT, HR]
+          example: "Engineering"
+          description: Employee department
+        joining_date:
+          type: string
+          format: date
+          example: "2024-01-15"
+          description: Employee joining date (YYYY-MM-DD)
+
+    EmployeeWithBalance:
+      allOf:
+        - $ref: '#/components/schemas/Employee'
+        - type: object
+          properties:
+            total_leave_days:
+              type: integer
+              example: 20
+            days_taken:
+              type: integer
+              example: 5
+            remaining_balance:
+              type: integer
+              example: 15
+
+    LeaveBalanceBreakdown:
+      type: object
+      properties:
+        annual_allocation:
+          type: integer
+          example: 20
+          description: Total annual leave allocation
+        approved_leaves:
+          type: integer
+          example: 5
+          description: Days already taken this year
+        available_balance:
+          type: integer
+          example: 15
+          description: Remaining leave days available
+
+    LeaveApplicationRequest:
+      type: object
+      required:
+        - employee_id
+        - start_date
+        - end_date
+        - type
+      properties:
+        employee_id:
+          type: integer
+          minimum: 1
+          example: 1
+          description: ID of the employee applying for leave
+        start_date:
+          type: string
+          format: date
+          example: "2024-08-25"
+          description: Leave start date (YYYY-MM-DD)
+        end_date:
+          type: string
+          format: date
+          example: "2024-08-27"
+          description: Leave end date (YYYY-MM-DD)
+        type:
+          type: string
+          enum: [annual, sick, personal, maternity, paternity, emergency, unpaid]
+          example: "annual"
+          description: Type of leave being requested
+        reason:
+          type: string
+          maxLength: 500
+          example: "Family vacation"
+          description: Reason for the leave request
+
+    LeaveRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        employee_id:
+          type: integer
+          example: 1
+        employee_name:
+          type: string
+          example: "John Doe"
+        start_date:
+          type: string
+          format: date
+          example: "2024-08-25"
+        end_date:
+          type: string
+          format: date
+          example: "2024-08-27"
+        days_requested:
+          type: integer
+          example: 3
+        type:
+          type: string
+          example: "annual"
+        reason:
+          type: string
+          example: "Family vacation"
+        status:
+          type: string
+          enum: [pending, approved, rejected, cancelled]
+          example: "pending"
+        applied_on:
+          type: string
+          format: date-time
+        approved_on:
+          type: string
+          format: date-time
+          nullable: true
+        approved_by:
+          type: string
+          nullable: true
+          example: "Jane Manager"
+
+    PendingLeaveRequest:
+      allOf:
+        - $ref: '#/components/schemas/LeaveRequest'
+        - type: object
+          properties:
+            employee_email:
+              type: string
+              format: email
+              example: "john.doe@company.com"
+
+    LeaveApprovalRequest:
+      type: object
+      required:
+        - status
+        - approved_by
+      properties:
+        status:
+          type: string
+          enum: [approved, rejected]
+          example: "approved"
+          description: Approval decision
+        approved_by:
+          type: integer
+          minimum: 1
+          example: 2
+          description: ID of the manager/approver
+        comments:
+          type: string
+          maxLength: 1000
+          example: "Approved for family vacation"
+          description: Optional comments for the approval/rejection
+        approval_reason:
+          type: string
+          maxLength: 500
+          example: "Standard annual leave approval"
+          description: Reason for the approval decision
+
+    ProcessedLeaveRequest:
+      allOf:
+        - $ref: '#/components/schemas/LeaveRequest'
+        - type: object
+          properties:
+            approved_by_id:
+              type: integer
+              example: 2
+            comments:
+              type: string
+              example: "Approved for family vacation"
+            approval_reason:
+              type: string
+              example: "Standard annual leave approval"
+
+    ApprovalSummary:
+      type: object
+      properties:
+        action_taken:
+          type: string
+          enum: [approved, rejected]
+          example: "approved"
+        processed_by:
+          type: string
+          example: "Jane Manager"
+        processing_timestamp:
+          type: string
+          format: date-time
+        business_days_affected:
+          type: integer
+          example: 3
+
+    BalanceUpdate:
+      type: object
+      properties:
+        previous_balance:
+          type: integer
+          example: 18
+        new_balance:
+          type: integer
+          example: 15
+        days_deducted:
+          type: integer
+          example: 3
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Something went wrong"
+        timestamp:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+          example: "abc123def456"
+
+    ValidationError:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          properties:
+            validation_errors:
+              type: array
+              items:
+                type: string
+              example: ["Missing required field: start_date", "Invalid email format"]
+
+    ConflictError:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          properties:
+            conflicting_leave:
+              type: object
+              properties:
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+                status:
+                  type: string
+                reason:
+                  type: string
+            suggestion:
+              type: string
+              example: "Please choose different dates or modify your existing leave request"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase JWT token
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Health
+    description: Health check and system status endpoints
+  - name: Employees
+    description: Employee management operations
+  - name: Leave Requests
+    description: Leave application and management
+  - name: Leave Approval
+    description: Manager approval and rejection workflows
+
+externalDocs:
+  description: Find out more about the Leave Management System
+  url: https://github.com/Abhinav12004/Leave-Management-System

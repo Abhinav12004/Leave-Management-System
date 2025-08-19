@@ -163,4 +163,4 @@ const leaveModel = {
   }
 };
 
-export default leaveModel;
+module.exports = leaveModel;

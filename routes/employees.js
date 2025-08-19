@@ -1,7 +1,7 @@
 // Employee routes - API endpoints for employee management
-import express from 'express';
-import employeeController from '../controllers/employeeController.js';
-import leaveController from '../controllers/leaveController.js';
+const express = require('express');
+const employeeController = require('../controllers/employeeController.js');
+const leaveController = require('../controllers/leaveController.js');
 
 const router = express.Router();
 
@@ -25,4 +25,4 @@ router.get('/:id', employeeController.getEmployeeById);
 // Returns: total leave allocation, leaves taken, remaining balance
 router.get('/:id/leave-balance', employeeController.getLeaveBalance);
 
-export default router;
+module.exports = router;

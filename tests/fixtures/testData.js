@@ -121,7 +121,7 @@ export const leaveRequests = {
 
 export const apiResponses = {
   approvalSuccess: {
-    message: 'Leave request approved successfully! 🎉',
+    message: 'Leave request approved successfully',
     leave_request: {
       id: 1,
       employee_name: 'John Doe',
