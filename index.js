@@ -53,11 +53,16 @@ console.log('Loading employee routes...');
 console.log('Loading leave routes...');
 console.log('Routes loaded');
 
-// Serve static files
+// Serve static files from root directory
 console.log('Setting up static file serving...');
 app.use(express.static('.'));
 
-// Test page routes
+// Serve existing test-page.html as the root page for easy API testing
+app.get('/', (req, res) => {
+  res.sendFile('test-page.html', { root: '.' });
+});
+
+// Test page routes for backward compatibility
 app.get('/test', (req, res) => {
   res.sendFile('test-page.html', { root: '.' });
 });
@@ -66,8 +71,8 @@ app.get('/test-page.html', (req, res) => {
   res.sendFile('test-page.html', { root: '.' });
 });
 
-// Main API info endpoint
-app.get('/', (req, res) => {
+// API info endpoint
+app.get('/api', (req, res) => {
   res.json({ 
     message: "Leave Management API is running",
     status: "healthy",
@@ -87,7 +92,7 @@ app.get('/', (req, res) => {
       'GET /auth/verify - Verify JWT token validity',
       'GET /ping - Health check',
       'GET /ping-db - Database connection test',
-      'GET /test - Interactive API test page'
+      'GET / - Interactive API test page'
     ]
   });
 });
@@ -152,7 +157,9 @@ app.use((req, res) => {
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📋 API Health: http://localhost:${PORT}/ping`);
-  console.log(`🌐 Test Page: http://localhost:${PORT}/test-page.html`);
+  console.log(`🌐 Interactive Test Page: http://localhost:${PORT}/`);
+  console.log(`� Test Page Direct: http://localhost:${PORT}/test-page.html`);
+  console.log(`�📝 API Documentation: http://localhost:${PORT}/api`);
   console.log(`🗄️ Database Test: http://localhost:${PORT}/ping-db`);
   console.log(`⏰ Started at: ${new Date().toISOString()}`);
   console.log(`🔧 Process ID: ${process.pid}`);

@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Leave Management API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        .endpoint { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #007bff; }
+        .test-form { background: #e7f3ff; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        input, select, textarea { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 5px; font-family: monospace; white-space: pre-wrap; }
+        .success { border-left: 4px solid #28a745; }
+        .error { border-left: 4px solid #dc3545; }
+        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; }
+        .status-live { background: #d4edda; color: #155724; }
+        .status-local { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏢 Leave Management System API Test</h1>
+        <p>Server running at: <strong><span id="serverUrl"></span></strong> 
+        <span id="statusBadge" class="status-badge"></span></p>
+
+        <div class="endpoint">
+            <h3>📋 Available Endpoints:</h3>
+            <ul>
+                <li><strong>GET</strong> /employees - List all employees</li>
+                <li><strong>POST</strong> /employees - Create new employee</li>
+                <li><strong>GET</strong> /employees/:id - Get employee by ID</li>
+                <li><strong>GET</strong> /employees/:id/leave-balance - Get employee leave balance</li>
+                <li><strong>POST</strong> /api/leaves/apply - Apply for leave</li>
+                <li><strong>GET</strong> /api/leaves/employee/:id - Get employee's leave requests</li>
+                <li><strong>GET</strong> /api/leaves/pending - Get all pending leave requests</li>
+                <li><strong>PUT</strong> /api/leaves/:id/approve - Approve/reject leave request</li>
+                <li><strong>DELETE</strong> /api/leaves/:id - Cancel leave request</li>
+                <li><strong>PATCH</strong> /api/leaves/:id - Modify leave request</li>
+            </ul>
+        </div>
+
+        <div class="test-form">
+            <h3>👥 Test: Add New Employee</h3>
+            <form id="addEmployeeForm">
+                <label>Name:</label>
+                <input type="text" id="emp_name" placeholder="Abhinav Pandey" required>
+                
+                <label>Email:</label>
+                <input type="email" id="emp_email" placeholder="Abhi123@company.com" required>
+                
+                <label>Department:</label>
+                <input type="text" id="emp_department" placeholder="Marketing" required>
+                
+                <label>Joining Date:</label>
+                <input type="date" id="emp_joining_date" value="2025-08-20" required>
+                
+                <button type="submit">Add Employee</button>
+            </form>
+            <div id="addEmployeeResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="test-form">
+            <h3>🎯 Test: Apply for Leave</h3>
+            <form id="leaveForm">
+                <label>Employee ID:</label>
+                <input type="number" id="employee_id" value="1" required>
+                
+                <label>Start Date:</label>
+                <input type="date" id="start_date" value="2025-08-25" required>
+                
+                <label>End Date:</label>
+                <input type="date" id="end_date" value="2025-08-27" required>
+                
+                <label>Leave Type:</label>
+                <select id="type">
+                    <option value="annual">Annual Leave</option>
+                    <option value="sick">Sick Leave</option>
+                    <option value="casual">Casual Leave</option>
+                </select>
+                
+                <label>Reason (optional):</label>
+                <textarea id="reason" placeholder="Family vacation">Family vacation</textarea>
+                
+                <button type="submit">Apply for Leave</button>
+            </form>
+            <div id="leaveResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="test-form">
+            <h3>📊 Test: Get Employee Leave Requests</h3>
+            <form id="getLeaveForm">
+                <label>Employee ID:</label>
+                <input type="number" id="get_employee_id" value="1" required>
+                <button type="submit">Get Leave Requests</button>
+            </form>
+            <div id="getLeaveResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="test-form">
+            <h3>📋 Test: Get Pending Leave Requests (for Managers)</h3>
+            <button onclick="getPendingRequests()">Get All Pending Requests</button>
+            <div id="pendingResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="test-form">
+            <h3>✅ Test: Approve/Reject Leave Request</h3>
+            <form id="approvalForm">
+                <label>Leave Request ID:</label>
+                <input type="number" id="leave_request_id" placeholder="1" required>
+                
+                <label>Decision:</label>
+                <select id="approval_status" required>
+                    <option value="">Select decision...</option>
+                    <option value="approved">✅ Approve</option>
+                    <option value="rejected">❌ Reject</option>
+                </select>
+                
+                <label>Approved By (Manager ID):</label>
+                <input type="number" id="approved_by" placeholder="1" required>
+                
+                <button type="submit">Process Leave Request</button>
+            </form>
+            <div id="approvalResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="test-form">
+            <h3>👥 Test: Get All Employees</h3>
+            <button onclick="getEmployees()">Get All Employees</button>
+            <div id="employeesResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="test-form">
+            <h3>💰 Test: Get Employee Leave Balance</h3>
+            <form id="leaveBalanceForm">
+                <label>Employee ID:</label>
+                <input type="number" id="balance_employee_id" placeholder="1" required>
+                
+                <button type="submit">Get Leave Balance</button>
+            </form>
+            <div id="leaveBalanceResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="test-form">
+            <h3>🗑️ Test: Cancel Leave Request</h3>
+            <form id="cancelLeaveForm">
+                <label>Leave Request ID:</label>
+                <input type="number" id="cancel_leave_id" placeholder="1" required>
+                
+                <label>Employee ID (for verification):</label>
+                <input type="number" id="cancel_employee_id" placeholder="1" required>
+                
+                <label>Cancellation Reason:</label>
+                <textarea id="cancel_reason" placeholder="Plans changed">Plans changed</textarea>
+                
+                <button type="submit">Cancel Leave Request</button>
+            </form>
+            <div id="cancelLeaveResult" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="test-form">
+            <h3>✏️ Test: Modify Leave Request</h3>
+            <form id="modifyLeaveForm">
+                <label>Leave Request ID:</label>
+                <input type="number" id="modify_leave_id" placeholder="1" required>
+                
+                <label>Employee ID (for verification):</label>
+                <input type="number" id="modify_employee_id" placeholder="1" required>
+                
+                <label>New Start Date (optional):</label>
+                <input type="date" id="modify_start_date" value="">
+                
+                <label>New End Date (optional):</label>
+                <input type="date" id="modify_end_date" value="">
+                
+                <label>New Leave Type (optional):</label>
+                <select id="modify_type">
+                    <option value="">Keep current type</option>
+                    <option value="annual">Annual Leave</option>
+                    <option value="sick">Sick Leave</option>
+                    <option value="casual">Casual Leave</option>
+                </select>
+                
+                <label>New Reason (optional):</label>
+                <textarea id="modify_reason" placeholder="Updated reason"></textarea>
+                
+                <button type="submit">Modify Leave Request</button>
+            </form>
+            <div id="modifyLeaveResult" class="result" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Detect server URL dynamically
+        const baseUrl = window.location.origin;
+        document.getElementById('serverUrl').textContent = baseUrl;
+        
+        // Set status badge
+        const statusBadge = document.getElementById('statusBadge');
+        if (baseUrl.includes('localhost')) {
+            statusBadge.textContent = 'LOCAL DEV';
+            statusBadge.className = 'status-badge status-local';
+        } else {
+            statusBadge.textContent = 'LIVE DEPLOYMENT';
+            statusBadge.className = 'status-badge status-live';
+        }
+
+        // Add new employee
+        document.getElementById('addEmployeeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('emp_name').value,
+                email: document.getElementById('emp_email').value,
+                department: document.getElementById('emp_department').value,
+                joining_date: document.getElementById('emp_joining_date').value
+            };
+
+            try {
+                const response = await fetch('/employees', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                const resultDiv = document.getElementById('addEmployeeResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = `result ${response.ok ? 'success' : 'error'}`;
+                resultDiv.textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                const resultDiv = document.getElementById('addEmployeeResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        });
+
+        // Apply for leave
+        document.getElementById('leaveForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                employee_id: parseInt(document.getElementById('employee_id').value),
+                start_date: document.getElementById('start_date').value,
+                end_date: document.getElementById('end_date').value,
+                type: document.getElementById('type').value,
+                reason: document.getElementById('reason').value
+            };
+
+            try {
+                const response = await fetch('/api/leaves/apply', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                const resultDiv = document.getElementById('leaveResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = `result ${response.ok ? 'success' : 'error'}`;
+                resultDiv.textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                const resultDiv = document.getElementById('leaveResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        });
+
+        // Get leave requests
+        document.getElementById('getLeaveForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const employeeId = document.getElementById('get_employee_id').value;
+
+            try {
+                const response = await fetch(`/api/leaves/employee/${employeeId}`);
+                const result = await response.json();
+                const resultDiv = document.getElementById('getLeaveResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = `result ${response.ok ? 'success' : 'error'}`;
+                resultDiv.textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                const resultDiv = document.getElementById('getLeaveResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        });
+
+        // Approve/reject leave request
+        document.getElementById('approvalForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const leaveId = document.getElementById('leave_request_id').value;
+            const formData = {
+                status: document.getElementById('approval_status').value,
+                approved_by: parseInt(document.getElementById('approved_by').value)
+            };
+
+            try {
+                const response = await fetch(`/api/leaves/${leaveId}/approve`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                const resultDiv = document.getElementById('approvalResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = `result ${response.ok ? 'success' : 'error'}`;
+                resultDiv.textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                const resultDiv = document.getElementById('approvalResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        });
+
+        // Get all employees
+        async function getEmployees() {
+            try {
+                const response = await fetch('/employees');
+                const result = await response.json();
+                const resultDiv = document.getElementById('employeesResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = `result ${response.ok ? 'success' : 'error'}`;
+                resultDiv.textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                const resultDiv = document.getElementById('employeesResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        }
+
+        // Get pending leave requests
+        async function getPendingRequests() {
+            try {
+                const response = await fetch('/api/leaves/pending');
+                const result = await response.json();
+                const resultDiv = document.getElementById('pendingResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = `result ${response.ok ? 'success' : 'error'}`;
+                resultDiv.textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                const resultDiv = document.getElementById('pendingResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        }
+
+        // Get employee leave balance
+        document.getElementById('leaveBalanceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const employeeId = document.getElementById('balance_employee_id').value;
+
+            try {
+                const response = await fetch(`/employees/${employeeId}/leave-balance`);
+                const result = await response.json();
+                const resultDiv = document.getElementById('leaveBalanceResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = `result ${response.ok ? 'success' : 'error'}`;
+                
+                if (response.ok) {
+                    // Format the response nicely for better readability
+                    const balance = result.leave_balance;
+                    const formattedResult = `
+📊 LEAVE BALANCE SUMMARY FOR ${balance.employee_name}
+=============================================
+👤 Employee: ${balance.employee_name} (ID: ${balance.employee_id})
+📧 Email: ${balance.employee_email}
+🏢 Department: ${balance.department}
+
+💰 BALANCE BREAKDOWN:
+   • Total Leave Allocation: ${balance.total_leave_allocation} days
+   • Leaves Taken: ${balance.leaves_taken} days  
+   • Remaining Leave: ${balance.remaining_leave} days
+
+📈 STATS:
+   • Total Approved Requests: ${balance.total_approved_requests}
+   • Balance as of: ${balance.balance_as_of}
+
+📋 RECENT LEAVE HISTORY:
+${balance.leave_history.length > 0 ? 
+  balance.leave_history.map(leave => 
+    `   • ${leave.start_date} to ${leave.end_date} (${leave.days_taken} days) - ${leave.type}`
+  ).join('\n') : 
+  '   • No leave history found'
+}
+
+ℹ️  Note: ${balance.note}
+                    `;
+                    resultDiv.textContent = formattedResult;
+                } else {
+                    resultDiv.textContent = JSON.stringify(result, null, 2);
+                }
+            } catch (error) {
+                const resultDiv = document.getElementById('leaveBalanceResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        });
+
+        // Cancel leave request
+        document.getElementById('cancelLeaveForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const leaveId = document.getElementById('cancel_leave_id').value;
+            const employeeId = document.getElementById('cancel_employee_id').value;
+            const reason = document.getElementById('cancel_reason').value;
+
+            try {
+                const response = await fetch(`/api/leaves/${leaveId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        employee_id: parseInt(employeeId),
+                        reason: reason
+                    })
+                });
+                
+                const result = await response.json();
+                const resultDiv = document.getElementById('cancelLeaveResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = `result ${response.ok ? 'success' : 'error'}`;
+                
+                if (response.ok) {
+                    const cancelled = result.cancelled_leave;
+                    const formattedResult = `
+🗑️ LEAVE REQUEST CANCELLED SUCCESSFULLY
+=====================================
+📋 Leave ID: ${cancelled.id}
+👤 Employee: ${cancelled.employee_name}
+📅 Original Dates: ${cancelled.original_dates}
+💬 Original Reason: ${cancelled.reason}
+🕒 Cancelled At: ${cancelled.cancelled_at}
+📝 Cancellation Reason: ${cancelled.cancellation_reason}
+
+ℹ️  ${result.note}
+                    `;
+                    resultDiv.textContent = formattedResult;
+                } else {
+                    resultDiv.textContent = JSON.stringify(result, null, 2);
+                }
+            } catch (error) {
+                const resultDiv = document.getElementById('cancelLeaveResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        });
+
+        // Modify leave request
+        document.getElementById('modifyLeaveForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const leaveId = document.getElementById('modify_leave_id').value;
+            const employeeId = document.getElementById('modify_employee_id').value;
+            const startDate = document.getElementById('modify_start_date').value;
+            const endDate = document.getElementById('modify_end_date').value;
+            const type = document.getElementById('modify_type').value;
+            const reason = document.getElementById('modify_reason').value;
+
+            // Build request body with only provided fields
+            const requestBody = {
+                employee_id: parseInt(employeeId)
+            };
+            
+            if (startDate) requestBody.start_date = startDate;
+            if (endDate) requestBody.end_date = endDate;
+            if (type) requestBody.type = type;
+            if (reason) requestBody.reason = reason;
+
+            try {
+                const response = await fetch(`/api/leaves/${leaveId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                const result = await response.json();
+                const resultDiv = document.getElementById('modifyLeaveResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = `result ${response.ok ? 'success' : 'error'}`;
+                
+                if (response.ok) {
+                    const modified = result.modified_leave;
+                    const changes = modified.changes;
+                    const current = modified.current_details;
+                    
+                    let changesText = '';
+                    if (changes.dates) changesText += `📅 Dates: ${changes.dates.before} → ${changes.dates.after}\n`;
+                    if (changes.type) changesText += `🏷️ Type: ${changes.type.before} → ${changes.type.after}\n`;
+                    if (changes.reason) changesText += `💬 Reason: ${changes.reason.before} → ${changes.reason.after}\n`;
+                    
+                    const formattedResult = `
+✏️ LEAVE REQUEST MODIFIED SUCCESSFULLY
+====================================
+📋 Leave ID: ${modified.id}
+👤 Employee: ${modified.employee_name}
+🕒 Modified At: ${modified.modified_at}
+
+📝 CHANGES MADE:
+${changesText || '   • No fields were changed'}
+
+📊 CURRENT LEAVE DETAILS:
+   • Dates: ${current.start_date} to ${current.end_date}
+   • Type: ${current.type}
+   • Reason: ${current.reason}
+   • Status: ${current.status}
+   • Days Requested: ${current.days_requested}
+
+ℹ️  ${result.note}
+                    `;
+                    resultDiv.textContent = formattedResult;
+                } else {
+                    resultDiv.textContent = JSON.stringify(result, null, 2);
+                }
+            } catch (error) {
+                const resultDiv = document.getElementById('modifyLeaveResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html>
