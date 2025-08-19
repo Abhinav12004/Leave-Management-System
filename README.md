@@ -134,6 +134,9 @@ flowchart TB
     class AUTH serverStyle
 ```
 
+### **📐 View Detailed Architecture**
+🔗 **[Interactive Architecture Diagram](https://app.eraser.io/workspace/ZXbM60p5wvDGcuVCQAXk?origin=share)** - Explore the complete system architecture in detail
+
 ### **Architecture Highlights**
 
 🔄 **Multi-Layer Architecture**: Clean separation of concerns with distinct layers for presentation, business logic, and data access
@@ -1014,4 +1017,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Happy Leave Management! 🏖️**
 
-*For questions or support, please refer to the documentation or contact the development team.*
+*For questions or support, please refer to the documentation or contact me.*
