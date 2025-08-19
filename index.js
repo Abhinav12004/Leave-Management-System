@@ -47,6 +47,7 @@ app.use((req, res, next) => {
 // Import route files
 const employeeRoutes = require('./routes/employees.js');
 const leaveRoutes = require('./routes/leaves.js');
+const authRoutes = require('./routes/auth.js');
 
 console.log('Loading employee routes...');
 console.log('Loading leave routes...');
@@ -82,6 +83,8 @@ app.get('/', (req, res) => {
       'PUT /api/leaves/:id/approve - Approve or reject leave request',
       'DELETE /api/leaves/:id - Cancel a leave request',
       'PATCH /api/leaves/:id - Modify a pending leave request',
+      'POST /auth/login - Authenticate and get JWT token',
+      'GET /auth/verify - Verify JWT token validity',
       'GET /ping - Health check',
       'GET /ping-db - Database connection test',
       'GET /test - Interactive API test page'
@@ -97,6 +100,7 @@ app.get('/ping', (req, res) => {
 // Setup API routes
 app.use('/employees', employeeRoutes);
 app.use('/api/leaves', leaveRoutes);
+app.use('/auth', authRoutes);
 
 // Test database connection with Supabase
 app.get('/ping-db', async (req, res) => {
