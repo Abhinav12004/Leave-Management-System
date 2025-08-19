@@ -13,12 +13,16 @@
         .result { background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 5px; font-family: monospace; white-space: pre-wrap; }
         .success { border-left: 4px solid #28a745; }
         .error { border-left: 4px solid #dc3545; }
+        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; }
+        .status-live { background: #d4edda; color: #155724; }
+        .status-local { background: #fff3cd; color: #856404; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🏢 Leave Management System API Test</h1>
-                <p>Server running at: <strong>http://localhost:3000</strong></p>
+        <p>Server running at: <strong><span id="serverUrl"></span></strong> 
+        <span id="statusBadge" class="status-badge"></span></p>
 
         <div class="endpoint">
             <h3>📋 Available Endpoints:</h3>
@@ -187,6 +191,20 @@
     </div>
 
     <script>
+        // Detect server URL dynamically
+        const baseUrl = window.location.origin;
+        document.getElementById('serverUrl').textContent = baseUrl;
+        
+        // Set status badge
+        const statusBadge = document.getElementById('statusBadge');
+        if (baseUrl.includes('localhost')) {
+            statusBadge.textContent = 'LOCAL DEV';
+            statusBadge.className = 'status-badge status-local';
+        } else {
+            statusBadge.textContent = 'LIVE DEPLOYMENT';
+            statusBadge.className = 'status-badge status-live';
+        }
+
         // Add new employee
         document.getElementById('addEmployeeForm').addEventListener('submit', async (e) => {
             e.preventDefault();

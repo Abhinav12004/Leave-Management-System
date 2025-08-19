@@ -4,6 +4,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
+const path = require('path');
 
 // Load environment variables
 dotenv.config();
@@ -53,23 +54,45 @@ console.log('Loading employee routes...');
 console.log('Loading leave routes...');
 console.log('Routes loaded');
 
-// Serve static files from root directory
-console.log('Setting up static file serving...');
-app.use(express.static('.'));
-
 // Serve existing test-page.html as the root page for easy API testing
 app.get('/', (req, res) => {
-  res.sendFile('test-page.html', { root: '.' });
+  const filePath = path.join(__dirname, 'test-page.html');
+  console.log(`Serving root page from: ${filePath}`);
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('Error serving test-page.html:', err);
+      res.status(500).json({ 
+        error: 'Could not load test page',
+        message: 'Please check if test-page.html exists in the root directory'
+      });
+    }
+  });
 });
 
 // Test page routes for backward compatibility
 app.get('/test', (req, res) => {
-  res.sendFile('test-page.html', { root: '.' });
+  const filePath = path.join(__dirname, 'test-page.html');
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('Error serving test page:', err);
+      res.status(500).json({ error: 'Could not load test page' });
+    }
+  });
 });
 
 app.get('/test-page.html', (req, res) => {
-  res.sendFile('test-page.html', { root: '.' });
+  const filePath = path.join(__dirname, 'test-page.html');
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('Error serving test-page.html:', err);
+      res.status(500).json({ error: 'Could not load test page' });
+    }
+  });
 });
+
+// Serve static files from root directory (after specific routes to avoid conflicts)
+console.log('Setting up static file serving...');
+app.use(express.static(path.join(__dirname)));
 
 // API info endpoint
 app.get('/api', (req, res) => {
